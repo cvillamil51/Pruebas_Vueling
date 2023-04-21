@@ -1,0 +1,60 @@
+using OpenQA.Selenium;
+using OpenQA.Selenium.Chrome;
+using System;
+using System.IO;
+using System.Threading;
+
+namespace VuelingTicketAutomation
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            // Leer los datos de entrada desde un archivo
+            var inputFile = "datos_entrada.csv";
+            var input = File.ReadAllLines(inputFile)[1];
+            var campos = input.Split(',');
+            var origen = campos[0];
+            var destino = campos[1];
+            var adultos = campos[2];
+            var niños = campos[3];
+            var fechaSalida = DateTime.Today.AddDays(4).ToString("dd/MM/yyyy");
+            var fechaRegreso = DateTime.Today.AddDays(7).ToString("dd/MM/yyyy");
+
+            // Configurar Selenium
+            var chromeOptions = new ChromeOptions();
+            chromeOptions.AddArgument("--start-maximized");
+            var driver = new ChromeDriver(chromeOptions);
+            driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(10);
+
+            // Navegar hasta la página de búsqueda de vuelos
+            driver.Navigate().GoToUrl("http://tickets.vueling.com");
+            driver.FindElement(By.Id("MultiDestTab")).Click();
+            driver.FindElement(By.Id("multitab1_content1_TXT_FROM")).SendKeys(origen);
+            driver.FindElement(By.Id("multitab1_content1_TXT_TO")).SendKeys(destino);
+            driver.FindElement(By.Id("multitab1_content1_TXT_LEAVE_DATE")).SendKeys(fechaSalida);
+            driver.FindElement(By.Id("multitab1_content1_TXT_RETURN_DATE")).SendKeys(fechaRegreso);
+            driver.FindElement(By.Id("multitab1_content1_PAXBOX_PAX0")).Clear();
+            driver.FindElement(By.Id("multitab1_content1_PAXBOX_PAX0")).SendKeys(adultos);
+            driver.FindElement(By.Id("multitab1_content1_PAXBOX_PAX3")).Clear();
+            driver.FindElement(By.Id("multitab1_content1_PAXBOX_PAX3")).SendKeys(niños);
+            driver.FindElement(By.Id("multitab1_content1_BUT_SEARCH")).Click();
+
+            // Seleccionar un vuelo aleatorio y tarifa configurable
+            var vuelos = driver.FindElements(By.CssSelector(".basic-group"));
+            var vuelo = vuelos[new Random().Next(vuelos.Count)];
+            var tarifas = vuelo.FindElements(By.CssSelector(".fare-option"));
+            var tarifa = tarifas[new Random().Next(tarifas.Count)];
+            tarifa.FindElement(By.CssSelector(".button-input")).Click();
+
+            // Continuar con la reserva
+            driver.FindElement(By.CssSelector(".main-button")).Click();
+
+            // Cerrar el navegador
+            driver.Quit();
+
+            // Confirmar que se ha terminado
+            Console.WriteLine("Terminado");
+        }
+    }
+}
